@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Quest — Results</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Navigation bar -->
+    <nav class="navbar">
+      <a class="brand" href="index.html">Study Quest</a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="about.html">About</a>
+      </div>
+      <!-- Language switch -->
+      <div class="lang-switch">
+        <a href="results.html" class="active">EN</a>
+        <span class="lang-sep">|</span>
+        <a href="ko/results.html">한국어</a>
+      </div>
+    </nav>
+
+    <main class="container">
+      <h1 class="page-title">Your Results</h1>
+
+      <!-- Score display (filled by JavaScript) -->
+      <div class="card">
+        <div class="score-display">
+          <p class="subtitle" style="margin-bottom:4px;">You scored</p>
+          <p class="big-score" id="big-score">0 / 0</p>
+        </div>
+      </div>
+
+      <!-- XP earned during the quiz -->
+      <p class="xp-earned" id="xp-earned">XP earned: <span class="xp-value">0</span></p>
+
+      <!-- Weak topics list (filled by JavaScript) -->
+      <div class="card">
+        <h2 style="font-size:1.2rem; margin:0 0 12px;">Weak topics</h2>
+        <ul class="weak-topics" id="weak-topics">
+          <li>Take a quiz to see your weak topics.</li>
+        </ul>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="actions-row">
+        <a class="btn btn-primary" href="quiz-webprogramming.html">Retry</a>
+        <a class="btn" href="dashboard.html">View Dashboard</a>
+      </div>
+    </main>
+
+    <!-- Small script: read quiz results from the browser session -->
+    <script>
+      // These were saved by script.js when the quiz ended
+      var score = sessionStorage.getItem("sq-score");
+      var total = sessionStorage.getItem("sq-total");
+      var xp = sessionStorage.getItem("sq-xp");
+      var topics = sessionStorage.getItem("sq-topics");
+
+      // Show the score (fallback to 0/0 if no quiz was taken)
+      if (score !== null && total !== null) {
+        document.getElementById("big-score").textContent = score + " / " + total;
+      }
+
+      // Show XP earned
+      if (xp !== null) {
+        document.querySelector("#xp-earned .xp-value").textContent = xp;
+      }
+
+      // Show weak topics from wrong answers
+      if (topics) {
+        var topicList = JSON.parse(topics);
+        if (topicList.length > 0) {
+          var ul = document.getElementById("weak-topics");
+          ul.innerHTML = ""; // clear the placeholder
+          topicList.forEach(function (t) {
+            var li = document.createElement("li");
+            li.textContent = t;
+            ul.appendChild(li);
+          });
+        } else {
+          // All correct — no weak topics
+          document.getElementById("weak-topics").innerHTML =
+            "<li>Great job! No weak topics — you got them all right!</li>";
+        }
+      }
+    </script>
+  </body>
+</html>

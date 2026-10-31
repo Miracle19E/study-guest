@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Quest — Create Profile</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Navigation bar -->
+    <nav class="navbar">
+      <a class="brand" href="index.html">Study Quest</a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="about.html">About</a>
+      </div>
+      <!-- Language switch -->
+      <div class="lang-switch">
+        <a href="profile.html" class="active">EN</a>
+        <span class="lang-sep">|</span>
+        <a href="ko/profile.html">한국어</a>
+      </div>
+    </nav>
+
+    <main class="container">
+      <!-- Create profile card (design only, no data saved) -->
+      <section class="card profile-card">
+        <h2 class="profile-heading">Create profile</h2>
+        <p class="subtitle profile-sub">Join the quest and climb the leaderboard.</p>
+
+        <!-- Form: all fields are demo-only, nothing is submitted -->
+        <form class="profile-form" action="school.html" method="get">
+          <!-- Name -->
+          <div class="form-field">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" placeholder="Your full name" />
+          </div>
+
+          <!-- Nickname (shown on leaderboard instead of real name) -->
+          <div class="form-field">
+            <label for="nickname">Nickname</label>
+            <input type="text" id="nickname" name="nickname" placeholder="Leaderboard name" />
+            <span class="form-hint">Shown on the leaderboard instead of your real name.</span>
+          </div>
+
+          <!-- Age -->
+          <div class="form-field">
+            <label for="age">Age</label>
+            <input type="number" id="age" name="age" placeholder="20" min="1" max="120" />
+          </div>
+
+          <!-- Level of education dropdown -->
+          <div class="form-field">
+            <label for="education">Level of education</label>
+            <select id="education" name="education">
+              <option value="" disabled selected>Select your level</option>
+              <option value="undergraduate">Undergraduate</option>
+              <option value="master">Master's</option>
+              <option value="phd">PhD</option>
+            </select>
+          </div>
+
+          <!-- Email -->
+          <div class="form-field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" />
+          </div>
+
+          <!-- Password -->
+          <div class="form-field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="••••••••" />
+          </div>
+
+          <!-- Submit button goes to school page -->
+          <button type="submit" class="btn btn-primary profile-submit">Create profile</button>
+        </form>
+
+        <!-- Small demo note -->
+        <p class="form-note">Demo only: no data is saved.</p>
+      </section>
+    </main>
+  </body>
+</html>

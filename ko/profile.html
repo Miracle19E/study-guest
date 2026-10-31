@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Quest — 프로필 만들기</title>
+    <link rel="stylesheet" href="../style.css" />
+  </head>
+  <body class="ko">
+    <!-- 네비게이션 바 -->
+    <nav class="navbar">
+      <a class="brand" href="index.html">Study Quest</a>
+      <div class="nav-links">
+        <a href="index.html">홈</a>
+        <a href="dashboard.html">대시보드</a>
+        <a href="about.html">소개</a>
+      </div>
+      <!-- 언어 전환 -->
+      <div class="lang-switch">
+        <a href="../profile.html">EN</a>
+        <span class="lang-sep">|</span>
+        <a href="profile.html" class="active">한국어</a>
+      </div>
+    </nav>
+
+    <main class="container">
+      <!-- 프로필 만들기 카드 (디자인 전용, 데이터 저장 안 됨) -->
+      <section class="card profile-card">
+        <h2 class="profile-heading">프로필 만들기</h2>
+        <p class="subtitle profile-sub">퀘스트에 참여하고 리더보드를 올려보세요.</p>
+
+        <!-- 폼: 모든 항목은 데모용, 실제로 제출되지 않음 -->
+        <form class="profile-form" action="school.html" method="get">
+          <!-- 이름 -->
+          <div class="form-field">
+            <label for="name">이름</label>
+            <input type="text" id="name" name="name" placeholder="전체 이름" />
+          </div>
+
+          <!-- 닉네임 (리더보드에 실명 대신 표시됨) -->
+          <div class="form-field">
+            <label for="nickname">닉네임</label>
+            <input type="text" id="nickname" name="nickname" placeholder="리더보드 이름" />
+            <span class="form-hint">리더보드에 실명 대신 표시됩니다.</span>
+          </div>
+
+          <!-- 나이 -->
+          <div class="form-field">
+            <label for="age">나이</label>
+            <input type="number" id="age" name="age" placeholder="20" min="1" max="120" />
+          </div>
+
+          <!-- 학력 드롭다운 -->
+          <div class="form-field">
+            <label for="education">학력</label>
+            <select id="education" name="education">
+              <option value="" disabled selected>학력을 선택하세요</option>
+              <option value="undergraduate">대학교</option>
+              <option value="master">석사</option>
+              <option value="phd">박사</option>
+            </select>
+          </div>
+
+          <!-- 이메일 -->
+          <div class="form-field">
+            <label for="email">이메일</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" />
+          </div>
+
+          <!-- 비밀번호 -->
+          <div class="form-field">
+            <label for="password">비밀번호</label>
+            <input type="password" id="password" name="password" placeholder="••••••••" />
+          </div>
+
+          <!-- 제출 버튼 (학교 선택 페이지로 이동) -->
+          <button type="submit" class="btn btn-primary profile-submit">프로필 만들기</button>
+        </form>
+
+        <!-- 데모 안내 문구 -->
+        <p class="form-note">데모 전용: 데이터가 저장되지 않습니다.</p>
+      </section>
+    </main>
+  </body>
+</html>

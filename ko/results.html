@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Quest — 결과</title>
+    <link rel="stylesheet" href="../style.css" />
+  </head>
+  <body class="ko">
+    <!-- 네비게이션 바 -->
+    <nav class="navbar">
+      <a class="brand" href="index.html">Study Quest</a>
+      <div class="nav-links">
+        <a href="index.html">홈</a>
+        <a href="dashboard.html">대시보드</a>
+        <a href="about.html">소개</a>
+      </div>
+      <!-- 언어 전환 -->
+      <div class="lang-switch">
+        <a href="../results.html">EN</a>
+        <span class="lang-sep">|</span>
+        <a href="results.html" class="active">한국어</a>
+      </div>
+    </nav>
+
+    <main class="container">
+      <h1 class="page-title">퀴즈 결과</h1>
+
+      <!-- 점수 표시 (JavaScript로 채워짐) -->
+      <div class="card">
+        <div class="score-display">
+          <p class="subtitle" style="margin-bottom:4px;">당신의 점수</p>
+          <p class="big-score" id="big-score">0 / 0</p>
+        </div>
+      </div>
+
+      <!-- 퀴즈에서 획득한 XP -->
+      <p class="xp-earned" id="xp-earned">획득 XP: <span class="xp-value">0</span></p>
+
+      <!-- 취약 주제 목록 (JavaScript로 채워짐) -->
+      <div class="card">
+        <h2 style="font-size:1.2rem; margin:0 0 12px;">취약 주제</h2>
+        <ul class="weak-topics" id="weak-topics">
+          <li>퀴즈를 풀면 취약 주제가 표시됩니다.</li>
+        </ul>
+      </div>
+
+      <!-- 액션 버튼 -->
+      <div class="actions-row">
+        <a class="btn btn-primary" href="quiz-webprogramming.html">다시 풀기</a>
+        <a class="btn" href="dashboard.html">대시보드 보기</a>
+      </div>
+    </main>
+
+    <!-- 간단한 스크립트: 브라우저 세션에서 퀴즈 결과 읽기 -->
+    <script>
+      // script.js가 퀴즈 종료 시 저장한 값들
+      var score = sessionStorage.getItem("sq-score");
+      var total = sessionStorage.getItem("sq-total");
+      var xp = sessionStorage.getItem("sq-xp");
+      var topics = sessionStorage.getItem("sq-topics");
+
+      // 점수 표시 (퀴즈를 안 풀었으면 0/0)
+      if (score !== null && total !== null) {
+        document.getElementById("big-score").textContent = score + " / " + total;
+      }
+
+      // 획득 XP 표시
+      if (xp !== null) {
+        document.querySelector("#xp-earned .xp-value").textContent = xp;
+      }
+
+      // 틀린 주제에서 취약 주제 표시
+      if (topics) {
+        var topicList = JSON.parse(topics);
+        if (topicList.length > 0) {
+          var ul = document.getElementById("weak-topics");
+          ul.innerHTML = ""; // 플레이스홀더 제거
+          topicList.forEach(function (t) {
+            var li = document.createElement("li");
+            li.textContent = t;
+            ul.appendChild(li);
+          });
+        } else {
+          // 전부 정답 — 취약 주제 없음
+          document.getElementById("weak-topics").innerHTML =
+            "<li>잘하셨어요! 취약 주제가 없습니다 — 전부 맞히셨네요!</li>";
+        }
+      }
+    </script>
+  </body>
+</html>

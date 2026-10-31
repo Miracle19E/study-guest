@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Quest — 과목 선택</title>
+    <link rel="stylesheet" href="../style.css" />
+  </head>
+  <body class="ko">
+    <!-- 네비게이션 바 -->
+    <nav class="navbar">
+      <a class="brand" href="index.html">Study Quest</a>
+      <div class="nav-links">
+        <a href="index.html">홈</a>
+        <a href="dashboard.html">대시보드</a>
+        <a href="about.html">소개</a>
+      </div>
+      <!-- 언어 전환 -->
+      <div class="lang-switch">
+        <a href="../subject.html">EN</a>
+        <span class="lang-sep">|</span>
+        <a href="subject.html" class="active">한국어</a>
+      </div>
+    </nav>
+
+    <main class="container">
+      <h1 class="page-title">과목을 선택하세요</h1>
+      <p class="subtitle">어떤 과목을 연습하고 싶나요?</p>
+
+      <!-- 각 과목 버튼은 과목별 퀴즈 페이지로 이동 -->
+      <div class="choice-grid">
+        <a class="choice-btn" href="quiz-webprogramming.html">
+          <span class="emoji">🌐</span>
+          웹 프로그래밍
+        </a>
+        <a class="choice-btn" href="quiz-statistics.html">
+          <span class="emoji">📊</span>
+          통계학
+        </a>
+        <a class="choice-btn" href="quiz-c.html">
+          <span class="emoji">💻</span>
+          C 프로그래밍
+        </a>
+        <a class="choice-btn" href="quiz-english.html">
+          <span class="emoji">📖</span>
+          영어
+        </a>
+      </div>
+    </main>
+  </body>
+</html>

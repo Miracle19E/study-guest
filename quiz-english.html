@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Quest — English Quiz</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Navigation bar -->
+    <nav class="navbar">
+      <a class="brand" href="index.html">Study Quest</a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="about.html">About</a>
+      </div>
+      <!-- Language switch -->
+      <div class="lang-switch">
+        <a href="quiz-english.html" class="active">EN</a>
+        <span class="lang-sep">|</span>
+        <a href="ko/quiz-english.html">한국어</a>
+      </div>
+    </nav>
+
+    <main class="container">
+      <!-- Quiz header: timer + score -->
+      <div class="quiz-header">
+        <span class="timer">⏱ 00:30</span>
+        <span class="score-box" id="score-box">Score: 0</span>
+      </div>
+
+      <h1 class="page-title">English Quiz</h1>
+      <p class="subtitle">3 questions • 30 seconds each</p>
+
+      <!-- Progress bar -->
+      <p class="progress-label" id="progress-label">Question 1 of 3</p>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+      <!-- The question card (filled by JavaScript) -->
+      <div class="card">
+        <p class="question-text" id="question-text">Loading...</p>
+        <div class="answer-options" id="answer-options"></div>
+        <p class="explanation" id="explanation"></p>
+      </div>
+
+      <!-- Next button (shown after answering) -->
+      <div class="actions-row">
+        <button class="btn btn-primary next-btn" id="next-btn">Next</button>
+      </div>
+    </main>
+
+    <!-- Quiz data as JSON (read by script.js) -->
+    <script type="application/json" id="quiz-data">
+    {
+      "subject": "English",
+      "resultsUrl": "results.html",
+      "labels": { "question": "Question", "of": "of", "next": "Next", "viewResults": "View Results", "score": "Score" },
+      "questions": [
+        {
+          "question": "Q1. Choose the correct sentence:",
+          "options": ["A. She don't like tea.", "B. She doesn't likes tea.", "C. She doesn't like tea.", "D. She not like tea."],
+          "correct": 2,
+          "topic": "Subject-verb agreement",
+          "explanation": "With 'she', use 'doesn't' + base verb: 'She doesn't like tea.'"
+        },
+        {
+          "question": "Q2. What is the past tense of \"go\"?",
+          "options": ["A. Goed", "B. Went", "C. Gone", "D. Going"],
+          "correct": 1,
+          "topic": "Irregular verbs",
+          "explanation": "'Go' is irregular — its past tense is 'went'."
+        },
+        {
+          "question": "Q3. Which word is a synonym for \"happy\"?",
+          "options": ["A. Sad", "B. Angry", "C. Joyful", "D. Tired"],
+          "correct": 2,
+          "topic": "Vocabulary",
+          "explanation": "'Joyful' means the same as 'happy' — both express a positive feeling."
+        }
+      ]
+    }
+    </script>
+    <script src="script.js"></script>
+  </body>
+</html>
