@@ -25,63 +25,42 @@
 
     <main class="container">
       <h1 class="page-title">Dashboard</h1>
-      <p class="subtitle">Your study progress at a glance.</p>
+      <p class="subtitle" id="dashboard-subtitle">Loading your progress...</p>
 
-      <!-- Stat cards: XP, level, streak -->
-      <div class="stat-grid">
+      <!-- Stat cards: XP, level, nickname -->
+      <div class="stat-grid" id="stat-grid">
         <div class="stat-card">
-          <div class="stat-value">1,250</div>
+          <div class="stat-value" id="stat-xp">—</div>
           <div class="stat-label">XP Points</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">Level 5</div>
+          <div class="stat-value" id="stat-level">—</div>
           <div class="stat-label">Current Level</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">5 days</div>
-          <div class="stat-label">Study Streak</div>
+          <div class="stat-value" id="stat-nickname">—</div>
+          <div class="stat-label">Nickname</div>
         </div>
       </div>
 
-      <!-- Anonymous leaderboard -->
+      <!-- Recent quiz results (filled by JavaScript) -->
       <div class="card">
-        <h2 style="font-size:1.2rem; margin:0 0 16px;">Top Students</h2>
-        <table class="leaderboard">
+        <h2 style="font-size:1.2rem; margin:0 0 16px;">Recent Quizzes</h2>
+        <p class="loading-text" id="loading-text">Loading...</p>
+        <table class="leaderboard" id="results-table" style="display:none;">
           <thead>
             <tr>
-              <th>Rank</th>
-              <th>Name</th>
+              <th>Subject</th>
+              <th>Score</th>
               <th>XP</th>
+              <th>Date</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td class="rank-1">1</td>
-              <td>Student_01</td>
-              <td>3,800</td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td>Student_02</td>
-              <td>3,200</td>
-            </tr>
-            <tr>
-              <td>3</td>
-              <td>Student_03</td>
-              <td>2,950</td>
-            </tr>
-            <tr>
-              <td>4</td>
-              <td>Student_04</td>
-              <td>2,100</td>
-            </tr>
-            <tr>
-              <td>5</td>
-              <td>You</td>
-              <td>1,250</td>
-            </tr>
-          </tbody>
+          <tbody id="results-body"></tbody>
         </table>
+        <p class="empty-message" id="empty-message" style="display:none;">
+          No quizzes yet. Take your first quiz to see your results here!
+        </p>
       </div>
 
       <!-- Action button to start a new quiz -->
@@ -89,5 +68,82 @@
         <a class="btn btn-primary" href="school.html">Start New Quiz</a>
       </div>
     </main>
+
+    <!-- Load dashboard data from Supabase -->
+    <script type="module">
+      import { supabase } from "./supabase.js";
+      import { updateNavbar } from "./auth.js";
+
+      // Run when the page loads
+      (async function () {
+        // Check if the student is logged in
+        var { data: sessionData } = await supabase.auth.getSession();
+
+        if (!sessionData.session) {
+          // Not logged in — show a message and a login link
+          document.getElementById("dashboard-subtitle").innerHTML =
+            'Please <a href="login.html">log in</a> to see your dashboard.';
+          document.getElementById("loading-text").style.display = "none";
+          return;
+        }
+
+        var userId = sessionData.session.user.id;
+
+        // Load the student's profile (nickname, xp)
+        var { data: profile } = await supabase
+          .from("profiles")
+          .select("nickname, xp")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (!profile) {
+          document.getElementById("dashboard-subtitle").textContent =
+            "Could not load your profile.";
+          document.getElementById("loading-text").style.display = "none";
+          return;
+        }
+
+        // Calculate level: 1 + floor(xp / 50)
+        var level = 1 + Math.floor((profile.xp || 0) / 50);
+
+        // Fill the stat cards
+        document.getElementById("stat-xp").textContent = profile.xp || 0;
+        document.getElementById("stat-level").textContent = "Level " + level;
+        document.getElementById("stat-nickname").textContent = profile.nickname;
+        document.getElementById("dashboard-subtitle").textContent =
+          "Your study progress at a glance.";
+
+        // Load the last 5 quiz results
+        var { data: results } = await supabase
+          .from("quiz_results")
+          .select("subject, score, total, xp_earned, created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        document.getElementById("loading-text").style.display = "none";
+
+        if (results && results.length > 0) {
+          // Show the table with results
+          var tbody = document.getElementById("results-body");
+          tbody.innerHTML = "";
+          results.forEach(function (r) {
+            var tr = document.createElement("tr");
+            // Format the date as a short readable string
+            var date = new Date(r.created_at).toLocaleDateString();
+            tr.innerHTML =
+              "<td>" + r.subject + "</td>" +
+              "<td>" + r.score + " / " + r.total + "</td>" +
+              "<td>" + r.xp_earned + "</td>" +
+              "<td>" + date + "</td>";
+            tbody.appendChild(tr);
+          });
+          document.getElementById("results-table").style.display = "table";
+        } else {
+          // No results yet — show a friendly message
+          document.getElementById("empty-message").style.display = "block";
+        }
+      })();
+    </script>
   </body>
 </html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Quest — Log In</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Navigation bar -->
+    <nav class="navbar">
+      <a class="brand" href="index.html">Study Quest</a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="about.html">About</a>
+      </div>
+      <!-- Language switch -->
+      <div class="lang-switch">
+        <a href="login.html" class="active">EN</a>
+        <span class="lang-sep">|</span>
+        <a href="ko/login.html">한국어</a>
+      </div>
+    </nav>
+
+    <main class="container">
+      <!-- Login card -->
+      <section class="card profile-card">
+        <h2 class="profile-heading">Log in</h2>
+        <p class="subtitle profile-sub">Welcome back! Enter your details to continue.</p>
+
+        <!-- Login form -->
+        <form class="profile-form" id="login-form" novalidate>
+          <!-- Email -->
+          <div class="form-field" style="grid-column:1/-1;">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" required />
+          </div>
+
+          <!-- Password -->
+          <div class="form-field" style="grid-column:1/-1;">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="••••••••" required />
+          </div>
+
+          <!-- Submit button -->
+          <button type="submit" class="btn btn-primary profile-submit" style="grid-column:1/-1;">Log in</button>
+        </form>
+
+        <!-- Success / error message area -->
+        <p class="form-message" id="form-message"></p>
+
+        <!-- Link for new students to create a profile -->
+        <p class="login-link">New here? <a href="profile.html">Create a profile</a></p>
+      </section>
+    </main>
+
+    <!-- Load the shared Supabase client and login logic -->
+    <script type="module">
+      import { supabase } from "./supabase.js";
+      import { updateNavbar } from "./auth.js";
+
+      // Grab the form and message area
+      const form = document.getElementById("login-form");
+      const message = document.getElementById("form-message");
+
+      // Show a message in green (success) or red (error)
+      function showMessage(text, type) {
+        message.textContent = text;
+        message.className = "form-message " + type;
+      }
+
+      // When the student presses "Log in"
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        // Read the values the student typed
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+
+        // Try to sign in with email + password
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error) {
+          // Common errors: wrong password, email not found
+          if (error.message.includes("Invalid login") || error.message.includes("credentials")) {
+            showMessage("Wrong email or password. Please try again.", "error");
+          } else {
+            showMessage(error.message, "error");
+          }
+          return;
+        }
+
+        // Success! Tell the student and go to the dashboard
+        showMessage("Logged in! Taking you to your dashboard...", "success");
+        window.location.href = "dashboard.html";
+      });
+    </script>
+    <!-- Update the navbar for login state -->
+    <script type="module" src="auth.js"></script>
+  </body>
+</html>

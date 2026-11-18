@@ -37,6 +37,11 @@
       <!-- XP earned during the quiz -->
       <p class="xp-earned" id="xp-earned">XP earned: <span class="xp-value">0</span></p>
 
+      <!-- Login prompt shown if not logged in -->
+      <p class="login-prompt" id="login-prompt" style="display:none;">
+        Log in to save your score and track your progress.
+      </p>
+
       <!-- Weak topics list (filled by JavaScript) -->
       <div class="card">
         <h2 style="font-size:1.2rem; margin:0 0 12px;">Weak topics</h2>
@@ -52,8 +57,11 @@
       </div>
     </main>
 
-    <!-- Small script: read quiz results from the browser session -->
-    <script>
+    <!-- Load quiz results from session + check login state -->
+    <script type="module">
+      import { supabase } from "./supabase.js";
+      import { updateNavbar } from "./auth.js";
+
       // These were saved by script.js when the quiz ended
       var score = sessionStorage.getItem("sq-score");
       var total = sessionStorage.getItem("sq-total");
@@ -75,17 +83,23 @@
         var topicList = JSON.parse(topics);
         if (topicList.length > 0) {
           var ul = document.getElementById("weak-topics");
-          ul.innerHTML = ""; // clear the placeholder
+          ul.innerHTML = "";
           topicList.forEach(function (t) {
             var li = document.createElement("li");
             li.textContent = t;
             ul.appendChild(li);
           });
         } else {
-          // All correct — no weak topics
           document.getElementById("weak-topics").innerHTML =
             "<li>Great job! No weak topics — you got them all right!</li>";
         }
+      }
+
+      // Check if the student is logged in
+      var { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        // Not logged in — show the login prompt
+        document.getElementById("login-prompt").style.display = "block";
       }
     </script>
   </body>

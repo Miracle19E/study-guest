@@ -37,6 +37,11 @@
       <!-- 퀴즈에서 획득한 XP -->
       <p class="xp-earned" id="xp-earned">획득 XP: <span class="xp-value">0</span></p>
 
+      <!-- 로그인하지 않은 경우 표시되는 로그인 안내 -->
+      <p class="login-prompt" id="login-prompt" style="display:none;">
+        점수를 저장하고 진행 상황을 추적하려면 로그인하세요.
+      </p>
+
       <!-- 취약 주제 목록 (JavaScript로 채워짐) -->
       <div class="card">
         <h2 style="font-size:1.2rem; margin:0 0 12px;">취약 주제</h2>
@@ -52,8 +57,11 @@
       </div>
     </main>
 
-    <!-- 간단한 스크립트: 브라우저 세션에서 퀴즈 결과 읽기 -->
-    <script>
+    <!-- 세션에서 퀴즈 결과 읽기 + 로그인 상태 확인 -->
+    <script type="module">
+      import { supabase } from "../supabase.js";
+      import { updateNavbar } from "../auth.js";
+
       // script.js가 퀴즈 종료 시 저장한 값들
       var score = sessionStorage.getItem("sq-score");
       var total = sessionStorage.getItem("sq-total");
@@ -75,17 +83,23 @@
         var topicList = JSON.parse(topics);
         if (topicList.length > 0) {
           var ul = document.getElementById("weak-topics");
-          ul.innerHTML = ""; // 플레이스홀더 제거
+          ul.innerHTML = "";
           topicList.forEach(function (t) {
             var li = document.createElement("li");
             li.textContent = t;
             ul.appendChild(li);
           });
         } else {
-          // 전부 정답 — 취약 주제 없음
           document.getElementById("weak-topics").innerHTML =
             "<li>잘하셨어요! 취약 주제가 없습니다 — 전부 맞히셨네요!</li>";
         }
+      }
+
+      // 학생이 로그인했는지 확인
+      var { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        // 로그인하지 않은 경우 — 로그인 안내 표시
+        document.getElementById("login-prompt").style.display = "block";
       }
     </script>
   </body>

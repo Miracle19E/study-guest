@@ -1,5 +1,8 @@
 /* ===== Study Quest — 퀴즈 로직 (모든 퀴즈 페이지 공통) ===== */
-/* 프레임워크 없음, 백엔드 없음 — 순수 JavaScript만 사용. */
+/* 문제 표시, 채점, 결과 저장을 처리합니다.                  */
+
+// 공유 Supabase 클라이언트 가져오기
+import { supabase } from "../supabase.js";
 
 // 페이지가 로드될 때까지 기다렸다가 실행
 document.addEventListener("DOMContentLoaded", function () {
@@ -99,20 +102,36 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // 학생이 "다음"을 클릭했을 때 호출
-  function nextQuestion() {
+  async function nextQuestion() {
     currentIndex++;
     if (currentIndex < questions.length) {
       // 다음 문제 표시
       showQuestion();
     } else {
-      // 퀴즈 완료 — 결과를 저장하고 결과 페이지로 이동
-      // 점수, XP, 취약 주제를 브라우저 세션에 저장
-      // 결과 페이지에서 이를 표시할 수 있음.
+      // 퀴즈 완료 — 결과를 sessionStorage에 저장하여
+      // 결과 페이지에서 표시할 수 있도록 함
       sessionStorage.setItem("sq-score", score);
       sessionStorage.setItem("sq-total", questions.length);
       sessionStorage.setItem("sq-xp", xp);
       sessionStorage.setItem("sq-topics", JSON.stringify(wrongTopics));
       sessionStorage.setItem("sq-subject", data.subject || "");
+
+      // 로그인된 경우, 퀴즈 결과를 Supabase에 저장하고 XP 추가
+      var { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        // quiz_results 테이블에 행 삽입
+        await supabase.from("quiz_results").insert({
+          subject: data.subject || "",
+          score: score,
+          total: questions.length,
+          xp_earned: xp,
+        });
+
+        // 이 사용자의 profiles 총 XP에 획득한 XP 추가
+        await supabase.rpc("add_xp", { xp_to_add: xp }).catch(function () {});
+      }
+
+      // 결과 페이지로 이동
       window.location.href = resultsUrl;
     }
   }

@@ -1,5 +1,8 @@
 /* ===== Study Quest — Quiz logic (shared by all quiz pages) ===== */
-/* No frameworks, no backend — just plain JavaScript. */
+/* Handles showing questions, scoring, and saving results.        */
+
+// Import the shared Supabase client
+import { supabase } from "./supabase.js";
 
 // Wait for the page to load before running anything
 document.addEventListener("DOMContentLoaded", function () {
@@ -99,20 +102,36 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Called when the student clicks "Next"
-  function nextQuestion() {
+  async function nextQuestion() {
     currentIndex++;
     if (currentIndex < questions.length) {
       // Show the next question
       showQuestion();
     } else {
-      // Quiz finished — save results and go to the results page
-      // We store score, XP, and weak topics in the browser's session
-      // so the results page can display them.
+      // Quiz finished — save results to sessionStorage so the
+      // results page can display them
       sessionStorage.setItem("sq-score", score);
       sessionStorage.setItem("sq-total", questions.length);
       sessionStorage.setItem("sq-xp", xp);
       sessionStorage.setItem("sq-topics", JSON.stringify(wrongTopics));
       sessionStorage.setItem("sq-subject", data.subject || "");
+
+      // If logged in, save the quiz result and add XP in Supabase
+      var { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        // Insert a row into quiz_results
+        await supabase.from("quiz_results").insert({
+          subject: data.subject || "",
+          score: score,
+          total: questions.length,
+          xp_earned: xp,
+        });
+
+        // Add the earned XP to this user's total in profiles
+        await supabase.rpc("add_xp", { xp_to_add: xp }).catch(function () {});
+      }
+
+      // Go to the results page
       window.location.href = resultsUrl;
     }
   }
