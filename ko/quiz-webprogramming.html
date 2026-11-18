@@ -81,6 +81,9 @@
       ]
     }
     </script>
-    <script src="script.js"></script>
+    <!-- Quiz logic (ES module so it can import supabase) -->
+    <script type="module" src="script.js"></script>
+    <!-- Update navbar based on login state -->
+    <script type="module" src="../auth.js"></script>
   </body>
 </html>
