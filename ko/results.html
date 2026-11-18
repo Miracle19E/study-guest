@@ -95,12 +95,15 @@
         }
       }
 
-      // 학생이 로그인했는지 확인
-      var { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        // 로그인하지 않은 경우 — 로그인 안내 표시
-        document.getElementById("login-prompt").style.display = "block";
-      }
+      // 학생이 로그인했는지 확인 (최상위 await가 구형 브라우저에서
+      // 지원되지 않으므로 async IIFE로 감싸음)
+      (async function () {
+        var { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          // 로그인하지 않은 경우 — 로그인 안내 표시
+          document.getElementById("login-prompt").style.display = "block";
+        }
+      })();
     </script>
   </body>
 </html>

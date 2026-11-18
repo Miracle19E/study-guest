@@ -95,12 +95,15 @@
         }
       }
 
-      // Check if the student is logged in
-      var { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        // Not logged in — show the login prompt
-        document.getElementById("login-prompt").style.display = "block";
-      }
+      // Check if the student is logged in (wrapped in async IIFE
+      // because top-level await is not supported in older browsers)
+      (async function () {
+        var { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          // Not logged in — show the login prompt
+          document.getElementById("login-prompt").style.display = "block";
+        }
+      })();
     </script>
   </body>
 </html>
