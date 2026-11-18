@@ -523,13 +523,24 @@ body {
   margin-top: 4px;
 }
 
-/* Demo note under the form */
-.form-note {
+/* Success / error message area under the form */
+.form-message {
   text-align: center;
-  font-size: 0.82rem;
-  color: var(--text-dim);
+  font-size: 0.9rem;
+  font-weight: 600;
   margin-top: 16px;
   margin-bottom: 0;
+  min-height: 1.2em;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.form-message.success {
+  color: var(--accent);
+  opacity: 1;
+}
+.form-message.error {
+  color: var(--danger);
+  opacity: 1;
 }
 
 /* ===== Responsive: phone layout ===== */

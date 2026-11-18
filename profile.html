@@ -24,23 +24,23 @@
     </nav>
 
     <main class="container">
-      <!-- Create profile card (design only, no data saved) -->
+      <!-- Create profile card -->
       <section class="card profile-card">
         <h2 class="profile-heading">Create profile</h2>
         <p class="subtitle profile-sub">Join the quest and climb the leaderboard.</p>
 
-        <!-- Form: all fields are demo-only, nothing is submitted -->
-        <form class="profile-form" action="school.html" method="get">
+        <!-- Profile form: creates an account and saves profile data -->
+        <form class="profile-form" id="profile-form" novalidate>
           <!-- Name -->
           <div class="form-field">
             <label for="name">Name</label>
-            <input type="text" id="name" name="name" placeholder="Your full name" />
+            <input type="text" id="name" name="name" placeholder="Your full name" required />
           </div>
 
           <!-- Nickname (shown on leaderboard instead of real name) -->
           <div class="form-field">
             <label for="nickname">Nickname</label>
-            <input type="text" id="nickname" name="nickname" placeholder="Leaderboard name" />
+            <input type="text" id="nickname" name="nickname" placeholder="Leaderboard name" required />
             <span class="form-hint">Shown on the leaderboard instead of your real name.</span>
           </div>
 
@@ -64,22 +64,91 @@
           <!-- Email -->
           <div class="form-field">
             <label for="email">Email</label>
-            <input type="email" id="email" name="email" placeholder="you@example.com" />
+            <input type="email" id="email" name="email" placeholder="you@example.com" required />
           </div>
 
           <!-- Password -->
           <div class="form-field">
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="••••••••" />
+            <input type="password" id="password" name="password" placeholder="••••••••" required />
           </div>
 
-          <!-- Submit button goes to school page -->
+          <!-- Submit button -->
           <button type="submit" class="btn btn-primary profile-submit">Create profile</button>
         </form>
 
-        <!-- Small demo note -->
-        <p class="form-note">Demo only: no data is saved.</p>
+        <!-- Success / error message area (filled by JavaScript) -->
+        <p class="form-message" id="form-message"></p>
       </section>
     </main>
+
+    <!-- Load the shared Supabase client and the profile logic -->
+    <script type="module">
+      // Import the shared Supabase client from supabase.js
+      import { supabase } from "./supabase.js";
+
+      // Grab the form and the message area from the page
+      const form = document.getElementById("profile-form");
+      const message = document.getElementById("form-message");
+
+      // Show a message in green (success) or red (error)
+      function showMessage(text, type) {
+        message.textContent = text;
+        message.className = "form-message " + type;
+      }
+
+      // When the student presses "Create profile"
+      form.addEventListener("submit", async function (e) {
+        // Stop the page from reloading
+        e.preventDefault();
+
+        // Read the values the student typed
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        const name = document.getElementById("name").value.trim();
+        const nickname = document.getElementById("nickname").value.trim();
+        const age = document.getElementById("age").value;
+        const education = document.getElementById("education").value;
+
+        // Step 1: create the account using Supabase Auth
+        const { data, error } = await supabase.auth.signUp({ email, password });
+
+        if (error) {
+          // Common errors: email already used, weak password
+          if (error.message.includes("already") || error.message.includes("registered")) {
+            showMessage("That email is already used. Try logging in instead.", "error");
+          } else {
+            showMessage(error.message, "error");
+          }
+          return;
+        }
+
+        // Get the new user's id
+        const userId = data.user.id;
+
+        // Step 2: save the student's profile into the profiles table
+        const { error: insertError } = await supabase.from("profiles").insert({
+          id: userId,
+          name: name,
+          nickname: nickname,
+          age: age ? parseInt(age) : null,
+          education: education,
+        });
+
+        if (insertError) {
+          // Common error: nickname already taken (unique column)
+          if (insertError.message.includes("nickname") || insertError.code === "23505") {
+            showMessage("That nickname is already taken. Please choose another one.", "error");
+          } else {
+            showMessage("Could not save your profile. Please try again.", "error");
+          }
+          return;
+        }
+
+        // Success! Tell the student and go to the school page
+        showMessage("Profile created! Taking you to school selection...", "success");
+        window.location.href = "school.html";
+      });
+    </script>
   </body>
 </html>

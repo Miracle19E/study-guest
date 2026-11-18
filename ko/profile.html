@@ -24,23 +24,23 @@
     </nav>
 
     <main class="container">
-      <!-- 프로필 만들기 카드 (디자인 전용, 데이터 저장 안 됨) -->
+      <!-- 프로필 만들기 카드 -->
       <section class="card profile-card">
         <h2 class="profile-heading">프로필 만들기</h2>
         <p class="subtitle profile-sub">퀘스트에 참여하고 리더보드를 올려보세요.</p>
 
-        <!-- 폼: 모든 항목은 데모용, 실제로 제출되지 않음 -->
-        <form class="profile-form" action="school.html" method="get">
+        <!-- 프로필 폼: 계정을 만들고 프로필 데이터를 저장합니다 -->
+        <form class="profile-form" id="profile-form" novalidate>
           <!-- 이름 -->
           <div class="form-field">
             <label for="name">이름</label>
-            <input type="text" id="name" name="name" placeholder="전체 이름" />
+            <input type="text" id="name" name="name" placeholder="전체 이름" required />
           </div>
 
           <!-- 닉네임 (리더보드에 실명 대신 표시됨) -->
           <div class="form-field">
             <label for="nickname">닉네임</label>
-            <input type="text" id="nickname" name="nickname" placeholder="리더보드 이름" />
+            <input type="text" id="nickname" name="nickname" placeholder="리더보드 이름" required />
             <span class="form-hint">리더보드에 실명 대신 표시됩니다.</span>
           </div>
 
@@ -64,22 +64,91 @@
           <!-- 이메일 -->
           <div class="form-field">
             <label for="email">이메일</label>
-            <input type="email" id="email" name="email" placeholder="you@example.com" />
+            <input type="email" id="email" name="email" placeholder="you@example.com" required />
           </div>
 
           <!-- 비밀번호 -->
           <div class="form-field">
             <label for="password">비밀번호</label>
-            <input type="password" id="password" name="password" placeholder="••••••••" />
+            <input type="password" id="password" name="password" placeholder="••••••••" required />
           </div>
 
-          <!-- 제출 버튼 (학교 선택 페이지로 이동) -->
+          <!-- 제출 버튼 -->
           <button type="submit" class="btn btn-primary profile-submit">프로필 만들기</button>
         </form>
 
-        <!-- 데모 안내 문구 -->
-        <p class="form-note">데모 전용: 데이터가 저장되지 않습니다.</p>
+        <!-- 성공 / 오류 메시지 영역 (JavaScript로 채워짐) -->
+        <p class="form-message" id="form-message"></p>
       </section>
     </main>
+
+    <!-- 공유 Supabase 클라이언트와 프로필 로직 로드 -->
+    <script type="module">
+      // supabase.js에서 공유 Supabase 클라이언트 가져오기
+      import { supabase } from "../supabase.js";
+
+      // 페이지에서 폼과 메시지 영역 가져오기
+      const form = document.getElementById("profile-form");
+      const message = document.getElementById("form-message");
+
+      // 초록색(성공) 또는 빨간색(오류)으로 메시지 표시
+      function showMessage(text, type) {
+        message.textContent = text;
+        message.className = "form-message " + type;
+      }
+
+      // 학생이 "프로필 만들기"를 눌렀을 때
+      form.addEventListener("submit", async function (e) {
+        // 페이지가 새로고침되지 않도록 막기
+        e.preventDefault();
+
+        // 학생이 입력한 값 읽기
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        const name = document.getElementById("name").value.trim();
+        const nickname = document.getElementById("nickname").value.trim();
+        const age = document.getElementById("age").value;
+        const education = document.getElementById("education").value;
+
+        // 1단계: Supabase Auth로 계정 만들기
+        const { data, error } = await supabase.auth.signUp({ email, password });
+
+        if (error) {
+          // 일반적인 오류: 이미 사용된 이메일, 약한 비밀번호
+          if (error.message.includes("already") || error.message.includes("registered")) {
+            showMessage("이미 사용 중인 이메일입니다. 로그인을 시도해 보세요.", "error");
+          } else {
+            showMessage(error.message, "error");
+          }
+          return;
+        }
+
+        // 새 사용자의 id 가져오기
+        const userId = data.user.id;
+
+        // 2단계: 학생의 프로필을 profiles 테이블에 저장
+        const { error: insertError } = await supabase.from("profiles").insert({
+          id: userId,
+          name: name,
+          nickname: nickname,
+          age: age ? parseInt(age) : null,
+          education: education,
+        });
+
+        if (insertError) {
+          // 일반적인 오류: 이미 사용 중인 닉네임 (고유 열)
+          if (insertError.message.includes("nickname") || insertError.code === "23505") {
+            showMessage("이미 사용 중인 닉네임입니다. 다른 닉네임을 선택해 주세요.", "error");
+          } else {
+            showMessage("프로필을 저장할 수 없습니다. 다시 시도해 주세요.", "error");
+          }
+          return;
+        }
+
+        // 성공! 학생에게 알리고 학교 선택 페이지로 이동
+        showMessage("프로필이 생성되었습니다! 학교 선택 페이지로 이동 중...", "success");
+        window.location.href = "school.html";
+      });
+    </script>
   </body>
 </html>
