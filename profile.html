@@ -29,7 +29,7 @@
         <h2 class="profile-heading">Create profile</h2>
         <p class="subtitle profile-sub">Join the quest and climb the leaderboard.</p>
 
-        <!-- Profile form: creates an account and saves profile data -->
+        <!-- Profile form: creates an account; the database makes the profile row -->
         <form class="profile-form" id="profile-form" novalidate>
           <!-- Name -->
           <div class="form-field">
@@ -79,17 +79,19 @@
 
         <!-- Success / error message area (filled by JavaScript) -->
         <p class="form-message" id="form-message"></p>
+
+        <!-- Link for students who already have an account -->
+        <p class="login-link">Already have an account? <a href="login.html">Log in</a></p>
       </section>
     </main>
 
-    <!-- Load the shared Supabase client and the profile logic -->
-    <script type="module">
-      // Import the shared Supabase client from supabase.js
-      import { supabase } from "./supabase.js";
-
+    <!-- Load Supabase from the CDN, then the shared client, then profile logic -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script>
       // Grab the form and the message area from the page
-      const form = document.getElementById("profile-form");
-      const message = document.getElementById("form-message");
+      var form = document.getElementById("profile-form");
+      var message = document.getElementById("form-message");
 
       // Show a message in green (success) or red (error)
       function showMessage(text, type) {
@@ -98,59 +100,61 @@
       }
 
       // When the student presses "Create profile"
-      form.addEventListener("submit", async function (e) {
+      form.addEventListener("submit", function (e) {
         // Stop the page from reloading
         e.preventDefault();
 
         // Read the values the student typed
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
-        const name = document.getElementById("name").value.trim();
-        const nickname = document.getElementById("nickname").value.trim();
-        const age = document.getElementById("age").value;
-        const education = document.getElementById("education").value;
+        var email = document.getElementById("email").value.trim();
+        var password = document.getElementById("password").value;
+        var name = document.getElementById("name").value.trim();
+        var nickname = document.getElementById("nickname").value.trim();
+        var age = document.getElementById("age").value;
+        var education = document.getElementById("education").value;
 
-        // Step 1: create the account using Supabase Auth
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        // Sign up with Supabase Auth. The extra profile details go in
+        // options.data — a database trigger uses them to create the
+        // profiles row automatically. We never insert into profiles here.
+        sq.auth
+          .signUp({
+            email: email,
+            password: password,
+            options: {
+              data: {
+                name: name,
+                nickname: nickname,
+                age: age,
+                education: education,
+              },
+            },
+          })
+          .then(function (result) {
+            var error = result.error;
 
-        if (error) {
-          // Common errors: email already used, weak password
-          if (error.message.includes("already") || error.message.includes("registered")) {
-            showMessage("That email is already used. Try logging in instead.", "error");
-          } else {
-            showMessage(error.message, "error");
-          }
-          return;
-        }
+            if (error) {
+              // Log the full error for debugging
+              console.log("Sign-up error:", error);
 
-        // Get the new user's id
-        const userId = data.user.id;
+              // Friendly message with the real error text underneath
+              showMessage(
+                "Could not create your profile. " + error.message,
+                "error"
+              );
+              return;
+            }
 
-        // Step 2: save the student's profile into the profiles table
-        const { error: insertError } = await supabase.from("profiles").insert({
-          id: userId,
-          name: name,
-          nickname: nickname,
-          age: age ? parseInt(age) : null,
-          education: education,
-        });
-
-        if (insertError) {
-          // Common error: nickname already taken (unique column)
-          if (insertError.message.includes("nickname") || insertError.code === "23505") {
-            showMessage("That nickname is already taken. Please choose another one.", "error");
-          } else {
-            showMessage("Could not save your profile. Please try again.", "error");
-          }
-          return;
-        }
-
-        // Success! Tell the student and go to the school page
-        showMessage("Profile created! Taking you to school selection...", "success");
-        window.location.href = "school.html";
+            // Success! Tell the student and go to the school page
+            showMessage("Profile created! Taking you to school selection...", "success");
+            window.location.href = "school.html";
+          })
+          .catch(function (err) {
+            // Network or unexpected failure
+            console.log("Sign-up error:", err);
+            showMessage("Could not create your profile. " + err.message, "error");
+          });
       });
     </script>
     <!-- Update navbar based on login state -->
-    <script type="module" src="auth.js"></script>
+    <script src="auth.js"></script>
   </body>
 </html>

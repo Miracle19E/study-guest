@@ -69,81 +69,90 @@
       </div>
     </main>
 
-    <!-- Supabase에서 대시보드 데이터 로드 -->
-    <script type="module">
-      import { supabase } from "../supabase.js";
-      import { updateNavbar } from "../auth.js";
-
-      // 페이지가 로드되면 실행
-      (async function () {
+    <!-- Supabase 로드 후 공유 클라이언트, 그 다음 대시보드 로직 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase.js"></script>
+    <script>
+      // 학생의 통계와 최근 5개 퀴즈 결과 불러오기
+      (function () {
         // 학생이 로그인했는지 확인
-        var { data: sessionData } = await supabase.auth.getSession();
+        sq.auth.getSession().then(function (result) {
+          var session = result.data && result.data.session;
 
-        if (!sessionData.session) {
-          // 로그인하지 않은 경우 — 메시지와 로그인 링크 표시
-          document.getElementById("dashboard-subtitle").innerHTML =
-            '대시보드를 보려면 <a href="login.html">로그인</a>해 주세요.';
-          document.getElementById("loading-text").style.display = "none";
-          return;
-        }
+          if (!session) {
+            // 로그인하지 않은 경우 — 메시지와 로그인 링크 표시
+            document.getElementById("dashboard-subtitle").innerHTML =
+              '대시보드를 보려면 <a href="login.html">로그인</a>해 주세요.';
+            document.getElementById("loading-text").style.display = "none";
+            return;
+          }
 
-        var userId = sessionData.session.user.id;
+          var userId = session.user.id;
 
-        // 학생의 프로필 로드 (닉네임, xp)
-        var { data: profile } = await supabase
-          .from("profiles")
-          .select("nickname, xp")
-          .eq("id", userId)
-          .maybeSingle();
+          // 학생의 프로필 (닉네임, xp) 불러오기
+          sq.from("profiles")
+            .select("nickname, xp")
+            .eq("id", userId)
+            .maybeSingle()
+            .then(function (profileRes) {
+              var profile = profileRes.data;
 
-        if (!profile) {
-          document.getElementById("dashboard-subtitle").textContent =
-            "프로필을 불러올 수 없습니다.";
-          document.getElementById("loading-text").style.display = "none";
-          return;
-        }
+              if (!profile) {
+                document.getElementById("dashboard-subtitle").textContent =
+                  "프로필을 불러올 수 없습니다.";
+                document.getElementById("loading-text").style.display = "none";
+                return;
+              }
 
-        // 레벨 계산: 1 + floor(xp / 50)
-        var level = 1 + Math.floor((profile.xp || 0) / 50);
+              // 레벨 계산: 1 + floor(xp / 50)
+              var level = 1 + Math.floor((profile.xp || 0) / 50);
 
-        // 통계 카드 채우기
-        document.getElementById("stat-xp").textContent = profile.xp || 0;
-        document.getElementById("stat-level").textContent = "레벨 " + level;
-        document.getElementById("stat-nickname").textContent = profile.nickname;
-        document.getElementById("dashboard-subtitle").textContent =
-          "학습 진행 상황을 한눈에 확인하세요.";
+              // 통계 카드 채우기
+              document.getElementById("stat-xp").textContent = profile.xp || 0;
+              document.getElementById("stat-level").textContent = "레벨 " + level;
+              document.getElementById("stat-nickname").textContent = profile.nickname;
+              document.getElementById("dashboard-subtitle").textContent =
+                "학습 진행 상황을 한눈에 확인하세요.";
 
-        // 최근 5개 퀴즈 결과 로드
-        var { data: results } = await supabase
-          .from("quiz_results")
-          .select("subject, score, total, xp_earned, created_at")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(5);
+              // 최근 5개 퀴즈 결과 불러오기
+              sq.from("quiz_results")
+                .select("subject, score, total, xp_earned, created_at")
+                .eq("user_id", userId)
+                .order("created_at", { ascending: false })
+                .limit(5)
+                .then(function (resultsRes) {
+                  var results = resultsRes.data;
 
-        document.getElementById("loading-text").style.display = "none";
+                  document.getElementById("loading-text").style.display = "none";
 
-        if (results && results.length > 0) {
-          // 결과 테이블 표시
-          var tbody = document.getElementById("results-body");
-          tbody.innerHTML = "";
-          results.forEach(function (r) {
-            var tr = document.createElement("tr");
-            // 날짜를 짧고 읽기 쉬운 형식으로 변환
-            var date = new Date(r.created_at).toLocaleDateString();
-            tr.innerHTML =
-              "<td>" + r.subject + "</td>" +
-              "<td>" + r.score + " / " + r.total + "</td>" +
-              "<td>" + r.xp_earned + "</td>" +
-              "<td>" + date + "</td>";
-            tbody.appendChild(tr);
-          });
-          document.getElementById("results-table").style.display = "table";
-        } else {
-          // 결과가 없는 경우 — 친절한 메시지 표시
-          document.getElementById("empty-message").style.display = "block";
-        }
+                  if (results && results.length > 0) {
+                    // 결과 테이블 표시
+                    var tbody = document.getElementById("results-body");
+                    tbody.innerHTML = "";
+                    results.forEach(function (r) {
+                      var tr = document.createElement("tr");
+                      // 날짜를 짧고 읽기 쉬운 형식으로 변환
+                      var date = new Date(r.created_at).toLocaleDateString();
+                      // 안전하게 셀을 textContent로 만들기
+                      var cells = [r.subject, r.score + " / " + r.total, r.xp_earned, date];
+                      cells.forEach(function (value) {
+                        var td = document.createElement("td");
+                        td.textContent = value;
+                        tr.appendChild(td);
+                      });
+                      tbody.appendChild(tr);
+                    });
+                    document.getElementById("results-table").style.display = "table";
+                  } else {
+                    // 결과가 없는 경우 — 친절한 메시지 표시
+                    document.getElementById("empty-message").style.display = "block";
+                  }
+                });
+            });
+        });
       })();
     </script>
+    <!-- Update navbar based on login state -->
+    <script src="../auth.js"></script>
   </body>
 </html>

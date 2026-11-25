@@ -69,81 +69,90 @@
       </div>
     </main>
 
-    <!-- Load dashboard data from Supabase -->
-    <script type="module">
-      import { supabase } from "./supabase.js";
-      import { updateNavbar } from "./auth.js";
-
-      // Run when the page loads
-      (async function () {
+    <!-- Load Supabase, the shared client, then the dashboard logic -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script>
+      // Load the student's stats and last 5 quiz results
+      (function () {
         // Check if the student is logged in
-        var { data: sessionData } = await supabase.auth.getSession();
+        sq.auth.getSession().then(function (result) {
+          var session = result.data && result.data.session;
 
-        if (!sessionData.session) {
-          // Not logged in — show a message and a login link
-          document.getElementById("dashboard-subtitle").innerHTML =
-            'Please <a href="login.html">log in</a> to see your dashboard.';
-          document.getElementById("loading-text").style.display = "none";
-          return;
-        }
+          if (!session) {
+            // Not logged in — show a message and a login link
+            document.getElementById("dashboard-subtitle").innerHTML =
+              'Please <a href="login.html">log in</a> to see your dashboard.';
+            document.getElementById("loading-text").style.display = "none";
+            return;
+          }
 
-        var userId = sessionData.session.user.id;
+          var userId = session.user.id;
 
-        // Load the student's profile (nickname, xp)
-        var { data: profile } = await supabase
-          .from("profiles")
-          .select("nickname, xp")
-          .eq("id", userId)
-          .maybeSingle();
+          // Load the student's profile (nickname, xp)
+          sq.from("profiles")
+            .select("nickname, xp")
+            .eq("id", userId)
+            .maybeSingle()
+            .then(function (profileRes) {
+              var profile = profileRes.data;
 
-        if (!profile) {
-          document.getElementById("dashboard-subtitle").textContent =
-            "Could not load your profile.";
-          document.getElementById("loading-text").style.display = "none";
-          return;
-        }
+              if (!profile) {
+                document.getElementById("dashboard-subtitle").textContent =
+                  "Could not load your profile.";
+                document.getElementById("loading-text").style.display = "none";
+                return;
+              }
 
-        // Calculate level: 1 + floor(xp / 50)
-        var level = 1 + Math.floor((profile.xp || 0) / 50);
+              // Calculate level: 1 + floor(xp / 50)
+              var level = 1 + Math.floor((profile.xp || 0) / 50);
 
-        // Fill the stat cards
-        document.getElementById("stat-xp").textContent = profile.xp || 0;
-        document.getElementById("stat-level").textContent = "Level " + level;
-        document.getElementById("stat-nickname").textContent = profile.nickname;
-        document.getElementById("dashboard-subtitle").textContent =
-          "Your study progress at a glance.";
+              // Fill the stat cards
+              document.getElementById("stat-xp").textContent = profile.xp || 0;
+              document.getElementById("stat-level").textContent = "Level " + level;
+              document.getElementById("stat-nickname").textContent = profile.nickname;
+              document.getElementById("dashboard-subtitle").textContent =
+                "Your study progress at a glance.";
 
-        // Load the last 5 quiz results
-        var { data: results } = await supabase
-          .from("quiz_results")
-          .select("subject, score, total, xp_earned, created_at")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(5);
+              // Load the last 5 quiz results
+              sq.from("quiz_results")
+                .select("subject, score, total, xp_earned, created_at")
+                .eq("user_id", userId)
+                .order("created_at", { ascending: false })
+                .limit(5)
+                .then(function (resultsRes) {
+                  var results = resultsRes.data;
 
-        document.getElementById("loading-text").style.display = "none";
+                  document.getElementById("loading-text").style.display = "none";
 
-        if (results && results.length > 0) {
-          // Show the table with results
-          var tbody = document.getElementById("results-body");
-          tbody.innerHTML = "";
-          results.forEach(function (r) {
-            var tr = document.createElement("tr");
-            // Format the date as a short readable string
-            var date = new Date(r.created_at).toLocaleDateString();
-            tr.innerHTML =
-              "<td>" + r.subject + "</td>" +
-              "<td>" + r.score + " / " + r.total + "</td>" +
-              "<td>" + r.xp_earned + "</td>" +
-              "<td>" + date + "</td>";
-            tbody.appendChild(tr);
-          });
-          document.getElementById("results-table").style.display = "table";
-        } else {
-          // No results yet — show a friendly message
-          document.getElementById("empty-message").style.display = "block";
-        }
+                  if (results && results.length > 0) {
+                    // Show the table with results
+                    var tbody = document.getElementById("results-body");
+                    tbody.innerHTML = "";
+                    results.forEach(function (r) {
+                      var tr = document.createElement("tr");
+                      // Format the date as a short readable string
+                      var date = new Date(r.created_at).toLocaleDateString();
+                      // Build cells with textContent to stay safe
+                      var cells = [r.subject, r.score + " / " + r.total, r.xp_earned, date];
+                      cells.forEach(function (value) {
+                        var td = document.createElement("td");
+                        td.textContent = value;
+                        tr.appendChild(td);
+                      });
+                      tbody.appendChild(tr);
+                    });
+                    document.getElementById("results-table").style.display = "table";
+                  } else {
+                    // No results yet — show a friendly message
+                    document.getElementById("empty-message").style.display = "block";
+                  }
+                });
+            });
+        });
       })();
     </script>
+    <!-- Update navbar based on login state -->
+    <script src="auth.js"></script>
   </body>
 </html>

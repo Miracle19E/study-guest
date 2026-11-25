@@ -57,11 +57,10 @@
       </div>
     </main>
 
-    <!-- 세션에서 퀴즈 결과 읽기 + 로그인 상태 확인 -->
-    <script type="module">
-      import { supabase } from "../supabase.js";
-      import { updateNavbar } from "../auth.js";
-
+    <!-- Supabase 로드 후 공유 클라이언트, 그 다음 결과 로직 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase.js"></script>
+    <script>
       // script.js가 퀴즈 종료 시 저장한 값들
       var score = sessionStorage.getItem("sq-score");
       var total = sessionStorage.getItem("sq-total");
@@ -95,15 +94,15 @@
         }
       }
 
-      // 학생이 로그인했는지 확인 (최상위 await가 구형 브라우저에서
-      // 지원되지 않으므로 async IIFE로 감싸음)
-      (async function () {
-        var { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData.session) {
-          // 로그인하지 않은 경우 — 로그인 안내 표시
+      // 학생이 로그인했는지 확인; 로그인하지 않았으면 안내 표시
+      sq.auth.getSession().then(function (result) {
+        var session = result.data && result.data.session;
+        if (!session) {
           document.getElementById("login-prompt").style.display = "block";
         }
-      })();
+      });
     </script>
+    <!-- Update navbar based on login state -->
+    <script src="../auth.js"></script>
   </body>
 </html>

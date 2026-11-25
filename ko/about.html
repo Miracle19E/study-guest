@@ -45,6 +45,9 @@
       </div>
     </main>
     <!-- Update navbar based on login state -->
-    <script type="module" src="../auth.js"></script>
+    <!-- Load Supabase from CDN, then the shared client, then navbar logic -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase.js"></script>
+    <script src="../auth.js"></script>
   </body>
 </html>

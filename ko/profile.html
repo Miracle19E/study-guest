@@ -29,7 +29,7 @@
         <h2 class="profile-heading">프로필 만들기</h2>
         <p class="subtitle profile-sub">퀘스트에 참여하고 리더보드를 올려보세요.</p>
 
-        <!-- 프로필 폼: 계정을 만들고 프로필 데이터를 저장합니다 -->
+        <!-- 프로필 폼: 계정을 만들면 데이터베이스가 프로필 행을 만듭니다 -->
         <form class="profile-form" id="profile-form" novalidate>
           <!-- 이름 -->
           <div class="form-field">
@@ -79,17 +79,19 @@
 
         <!-- 성공 / 오류 메시지 영역 (JavaScript로 채워짐) -->
         <p class="form-message" id="form-message"></p>
+
+        <!-- 계정이 이미 있는 학생을 위한 링크 -->
+        <p class="login-link">이미 계정이 있으신가요? <a href="login.html">로그인</a></p>
       </section>
     </main>
 
-    <!-- 공유 Supabase 클라이언트와 프로필 로직 로드 -->
-    <script type="module">
-      // supabase.js에서 공유 Supabase 클라이언트 가져오기
-      import { supabase } from "../supabase.js";
-
+    <!-- CDN에서 Supabase 로드 후 공유 클라이언트, 그 다음 프로필 로직 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase.js"></script>
+    <script>
       // 페이지에서 폼과 메시지 영역 가져오기
-      const form = document.getElementById("profile-form");
-      const message = document.getElementById("form-message");
+      var form = document.getElementById("profile-form");
+      var message = document.getElementById("form-message");
 
       // 초록색(성공) 또는 빨간색(오류)으로 메시지 표시
       function showMessage(text, type) {
@@ -98,59 +100,61 @@
       }
 
       // 학생이 "프로필 만들기"를 눌렀을 때
-      form.addEventListener("submit", async function (e) {
+      form.addEventListener("submit", function (e) {
         // 페이지가 새로고침되지 않도록 막기
         e.preventDefault();
 
         // 학생이 입력한 값 읽기
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
-        const name = document.getElementById("name").value.trim();
-        const nickname = document.getElementById("nickname").value.trim();
-        const age = document.getElementById("age").value;
-        const education = document.getElementById("education").value;
+        var email = document.getElementById("email").value.trim();
+        var password = document.getElementById("password").value;
+        var name = document.getElementById("name").value.trim();
+        var nickname = document.getElementById("nickname").value.trim();
+        var age = document.getElementById("age").value;
+        var education = document.getElementById("education").value;
 
-        // 1단계: Supabase Auth로 계정 만들기
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        // Supabase Auth로 회원가입합니다. 프로필 세부 정보는 options.data에
+        // 들어가며, 데이터베이스 트리거가 이를 사용해 자동으로 profiles 행을
+        // 만듭니다. 여기서 profiles 테이블에 직접 삽입하지 않습니다.
+        sq.auth
+          .signUp({
+            email: email,
+            password: password,
+            options: {
+              data: {
+                name: name,
+                nickname: nickname,
+                age: age,
+                education: education,
+              },
+            },
+          })
+          .then(function (result) {
+            var error = result.error;
 
-        if (error) {
-          // 일반적인 오류: 이미 사용된 이메일, 약한 비밀번호
-          if (error.message.includes("already") || error.message.includes("registered")) {
-            showMessage("이미 사용 중인 이메일입니다. 로그인을 시도해 보세요.", "error");
-          } else {
-            showMessage(error.message, "error");
-          }
-          return;
-        }
+            if (error) {
+              // 디버깅을 위해 전체 오류 기록
+              console.log("회원가입 오류:", error);
 
-        // 새 사용자의 id 가져오기
-        const userId = data.user.id;
+              // 친절한 메시지 아래에 실제 오류 텍스트 표시
+              showMessage(
+                "프로필을 만들 수 없습니다. " + error.message,
+                "error"
+              );
+              return;
+            }
 
-        // 2단계: 학생의 프로필을 profiles 테이블에 저장
-        const { error: insertError } = await supabase.from("profiles").insert({
-          id: userId,
-          name: name,
-          nickname: nickname,
-          age: age ? parseInt(age) : null,
-          education: education,
-        });
-
-        if (insertError) {
-          // 일반적인 오류: 이미 사용 중인 닉네임 (고유 열)
-          if (insertError.message.includes("nickname") || insertError.code === "23505") {
-            showMessage("이미 사용 중인 닉네임입니다. 다른 닉네임을 선택해 주세요.", "error");
-          } else {
-            showMessage("프로필을 저장할 수 없습니다. 다시 시도해 주세요.", "error");
-          }
-          return;
-        }
-
-        // 성공! 학생에게 알리고 학교 선택 페이지로 이동
-        showMessage("프로필이 생성되었습니다! 학교 선택 페이지로 이동 중...", "success");
-        window.location.href = "school.html";
+            // 성공! 학생에게 알리고 학교 선택 페이지로 이동
+            showMessage("프로필이 생성되었습니다! 학교 선택 페이지로 이동 중...", "success");
+            window.location.href = "school.html";
+          })
+          .catch(function (err) {
+            // 네트워크 또는 예기치 않은 오류
+            console.log("회원가입 오류:", err);
+            showMessage("프로필을 만들 수 없습니다. " + err.message, "error");
+          });
       });
     </script>
     <!-- Update navbar based on login state -->
-    <script type="module" src="../auth.js"></script>
+    <script src="../auth.js"></script>
   </body>
 </html>

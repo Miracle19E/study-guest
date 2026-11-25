@@ -55,14 +55,13 @@
       </section>
     </main>
 
-    <!-- Load the shared Supabase client and login logic -->
-    <script type="module">
-      import { supabase } from "./supabase.js";
-      import { updateNavbar } from "./auth.js";
-
+    <!-- Load Supabase from the CDN, then the shared client, then login logic -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script>
       // Grab the form and message area
-      const form = document.getElementById("login-form");
-      const message = document.getElementById("form-message");
+      var form = document.getElementById("login-form");
+      var message = document.getElementById("form-message");
 
       // Show a message in green (success) or red (error)
       function showMessage(text, type) {
@@ -71,32 +70,43 @@
       }
 
       // When the student presses "Log in"
-      form.addEventListener("submit", async function (e) {
+      form.addEventListener("submit", function (e) {
         e.preventDefault();
 
         // Read the values the student typed
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
+        var email = document.getElementById("email").value.trim();
+        var password = document.getElementById("password").value;
 
-        // Try to sign in with email + password
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        // Sign in with email + password
+        sq.auth
+          .signInWithPassword({ email: email, password: password })
+          .then(function (result) {
+            var error = result.error;
 
-        if (error) {
-          // Common errors: wrong password, email not found
-          if (error.message.includes("Invalid login") || error.message.includes("credentials")) {
-            showMessage("Wrong email or password. Please try again.", "error");
-          } else {
-            showMessage(error.message, "error");
-          }
-          return;
-        }
+            if (error) {
+              // Log the full error for debugging
+              console.log("Login error:", error);
 
-        // Success! Tell the student and go to the dashboard
-        showMessage("Logged in! Taking you to your dashboard...", "success");
-        window.location.href = "dashboard.html";
+              // Common error: wrong email or password
+              if (error.message.indexOf("Invalid login") !== -1) {
+                showMessage("Wrong email or password. Please try again.", "error");
+              } else {
+                showMessage("Could not log you in. " + error.message, "error");
+              }
+              return;
+            }
+
+            // Success! Go to the dashboard
+            showMessage("Logged in! Taking you to your dashboard...", "success");
+            window.location.href = "dashboard.html";
+          })
+          .catch(function (err) {
+            console.log("Login error:", err);
+            showMessage("Could not log you in. " + err.message, "error");
+          });
       });
     </script>
-    <!-- Update the navbar for login state -->
-    <script type="module" src="auth.js"></script>
+    <!-- Update navbar based on login state -->
+    <script src="auth.js"></script>
   </body>
 </html>

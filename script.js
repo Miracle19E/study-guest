@@ -1,8 +1,6 @@
 /* ===== Study Quest — Quiz logic (shared by all quiz pages) ===== */
-/* Handles showing questions, scoring, and saving results.        */
-
-// Import the shared Supabase client
-import { supabase } from "./supabase.js";
+/* Classic script (no modules) so it works when opening the file   */
+/* directly. Needs supabase.js loaded first (which creates `sq`).  */
 
 // Wait for the page to load before running anything
 document.addEventListener("DOMContentLoaded", function () {
@@ -102,7 +100,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Called when the student clicks "Next"
-  async function nextQuestion() {
+  function nextQuestion() {
     currentIndex++;
     if (currentIndex < questions.length) {
       // Show the next question
@@ -116,23 +114,35 @@ document.addEventListener("DOMContentLoaded", function () {
       sessionStorage.setItem("sq-topics", JSON.stringify(wrongTopics));
       sessionStorage.setItem("sq-subject", data.subject || "");
 
-      // If logged in, save the quiz result and add XP in Supabase
-      var { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData.session) {
-        // Insert a row into quiz_results
-        await supabase.from("quiz_results").insert({
-          subject: data.subject || "",
-          score: score,
-          total: questions.length,
-          xp_earned: xp,
-        });
+      // If logged in, save the quiz result and add XP in Supabase,
+      // then go to the results page either way
+      sq.auth.getSession().then(function (result) {
+        var session = result.data && result.data.session;
+        if (session) {
+          // Insert a row into quiz_results
+          sq.from("quiz_results")
+            .insert({
+              subject: data.subject || "",
+              score: score,
+              total: questions.length,
+              xp_earned: xp,
+            })
+            .then(function (insRes) {
+              if (insRes.error) console.log("Save result error:", insRes.error);
 
-        // Add the earned XP to this user's total in profiles
-        await supabase.rpc("add_xp", { xp_to_add: xp }).catch(function () {});
-      }
-
-      // Go to the results page
-      window.location.href = resultsUrl;
+              // Add the earned XP to this user's total in profiles
+              return sq.rpc("add_xp", { xp_to_add: xp });
+            })
+            .then(function (rpcRes) {
+              if (rpcRes && rpcRes.error) console.log("Add XP error:", rpcRes.error);
+              // Go to the results page
+              window.location.href = resultsUrl;
+            });
+        } else {
+          // Not logged in — just go to the results page
+          window.location.href = resultsUrl;
+        }
+      });
     }
   }
 

@@ -1,82 +1,79 @@
-/* ===== Study Quest — Shared auth + navbar logic ===== */
-/* This module runs on every page. It checks if the student is     */
-/* logged in and updates the navigation bar accordingly.            */
-/* It also exports helper functions other scripts can use.          */
+/* ===== Study Quest — Shared navbar login logic ===== */
+/* This classic script runs on every page. It checks if the student */
+/* is logged in and updates the navigation bar accordingly.         */
+/* It needs supabase.js to be loaded FIRST (which creates `sq`).    */
 
-import { supabase } from "./supabase.js";
+(function () {
+  // Detect if we are inside the ko/ folder by checking the page path
+  var inKorean = window.location.pathname.includes("/ko/");
 
-// Detect if we are inside the ko/ folder by checking the page path
-const inKorean = window.location.pathname.includes("/ko/");
+  // The text shown in the navbar — English or Korean
+  var t = {
+    hi: inKorean ? "안녕, " : "Hi, ",
+    logout: inKorean ? "로그아웃" : "Log out",
+    login: inKorean ? "로그인" : "Log in",
+  };
 
-// Build the correct relative path to a page depending on language folder
-function pageLink(page) {
-  return inKorean ? page : page;
-}
+  // Update the navbar: show greeting + logout if logged in, or login link if not
+  function updateNavbar() {
+    // Find the navbar element on the page
+    var navbar = document.querySelector(".navbar");
+    if (!navbar) return;
 
-// The text shown in the navbar — English or Korean
-const t = {
-  hi: inKorean ? "안녕, " : "Hi, ",
-  logout: inKorean ? "로그아웃" : "Log out",
-  login: inKorean ? "로그인" : "Log in",
-};
+    // Check if the student is logged in
+    sq.auth.getSession().then(function (result) {
+      var session = result.data && result.data.session;
 
-// Update the navbar: show greeting + logout if logged in, or login link if not
-export async function updateNavbar() {
-  // Find the navbar element on the page
-  const navbar = document.querySelector(".navbar");
-  if (!navbar) return;
+      // Find or create the auth area in the navbar
+      var authArea = navbar.querySelector(".nav-auth");
+      if (!authArea) {
+        authArea = document.createElement("div");
+        authArea.className = "nav-auth";
+        navbar.appendChild(authArea);
+      }
 
-  // Check if the student is logged in
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+      if (session) {
+        // Logged in — load the nickname from the profiles table
+        sq.from("profiles")
+          .select("nickname")
+          .eq("id", session.user.id)
+          .maybeSingle()
+          .then(function (res) {
+            var profile = res.data;
+            var nickname = profile ? profile.nickname : session.user.email;
 
-  // Find or create the auth area in the navbar
-  let authArea = navbar.querySelector(".nav-auth");
-  if (!authArea) {
-    authArea = document.createElement("div");
-    authArea.className = "nav-auth";
-    navbar.appendChild(authArea);
-  }
+            // Show "Hi, <nickname>" and a logout button
+            var greeting = document.createElement("span");
+            greeting.className = "nav-greeting";
+            greeting.textContent = t.hi + nickname;
 
-  if (session) {
-    // Logged in — try to load the nickname from profiles
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("nickname")
-      .eq("id", session.user.id)
-      .maybeSingle();
+            var logoutBtn = document.createElement("button");
+            logoutBtn.className = "btn btn-small nav-logout";
+            logoutBtn.textContent = t.logout;
+            // When clicked, sign out and reload the page
+            logoutBtn.addEventListener("click", function () {
+              sq.auth.signOut().then(function () {
+                window.location.reload();
+              });
+            });
 
-    const nickname = profile ? profile.nickname : session.user.email;
-
-    // Show "Hi, <nickname>" and a logout button
-    const greeting = document.createElement("span");
-    greeting.className = "nav-greeting";
-    greeting.textContent = t.hi + nickname;
-
-    const logoutBtn = document.createElement("button");
-    logoutBtn.className = "btn btn-small nav-logout";
-    logoutBtn.textContent = t.logout;
-    // When clicked, sign out and reload the page
-    logoutBtn.addEventListener("click", async function () {
-      await supabase.auth.signOut();
-      window.location.reload();
+            authArea.innerHTML = "";
+            authArea.appendChild(greeting);
+            authArea.appendChild(logoutBtn);
+          });
+      } else {
+        // Not logged in — show a "Log in" link
+        var loginHref = inKorean ? "login.html" : "login.html";
+        authArea.innerHTML =
+          '<a class="btn btn-small nav-login" href="' + loginHref + '">' + t.login + "</a>";
+      }
     });
-
-    authArea.innerHTML = "";
-    authArea.appendChild(greeting);
-    authArea.appendChild(logoutBtn);
-  } else {
-    // Not logged in — show a "Log in" link
-    const loginHref = inKorean ? "login.html" : "login.html";
-    authArea.innerHTML =
-      '<a class="btn btn-small nav-login" href="' + loginHref + '">' + t.login + "</a>";
   }
-}
 
-// Run the navbar update as soon as the page loads
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", updateNavbar);
-} else {
-  updateNavbar();
-}
+  // Run the navbar update as soon as the page loads
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", updateNavbar);
+  } else {
+    updateNavbar();
+  }
+})();

@@ -57,11 +57,10 @@
       </div>
     </main>
 
-    <!-- Load quiz results from session + check login state -->
-    <script type="module">
-      import { supabase } from "./supabase.js";
-      import { updateNavbar } from "./auth.js";
-
+    <!-- Load Supabase, the shared client, then the results logic -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script>
       // These were saved by script.js when the quiz ended
       var score = sessionStorage.getItem("sq-score");
       var total = sessionStorage.getItem("sq-total");
@@ -95,15 +94,15 @@
         }
       }
 
-      // Check if the student is logged in (wrapped in async IIFE
-      // because top-level await is not supported in older browsers)
-      (async function () {
-        var { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData.session) {
-          // Not logged in — show the login prompt
+      // Check if the student is logged in; if not, show the login prompt
+      sq.auth.getSession().then(function (result) {
+        var session = result.data && result.data.session;
+        if (!session) {
           document.getElementById("login-prompt").style.display = "block";
         }
-      })();
+      });
     </script>
+    <!-- Update navbar based on login state -->
+    <script src="auth.js"></script>
   </body>
 </html>

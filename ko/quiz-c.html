@@ -81,9 +81,11 @@
       ]
     }
     </script>
-    <!-- Quiz logic (ES module so it can import supabase) -->
-    <script type="module" src="script.js"></script>
+    <!-- Supabase 로드 후 퀴즈 로직 (클래식 스크립트, 모듈 없음) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase.js"></script>
+    <script src="script.js"></script>
     <!-- Update navbar based on login state -->
-    <script type="module" src="../auth.js"></script>
+    <script src="../auth.js"></script>
   </body>
 </html>

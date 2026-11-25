@@ -1,8 +1,6 @@
 /* ===== Study Quest — 퀴즈 로직 (모든 퀴즈 페이지 공통) ===== */
-/* 문제 표시, 채점, 결과 저장을 처리합니다.                  */
-
-// 공유 Supabase 클라이언트 가져오기
-import { supabase } from "../supabase.js";
+/* 클래식 스크립트(모듈 없음)이므로 파일을 직접 열어도 동작합니다. */
+/* supabase.js가 먼저 로드되어야 합니다(sq 전역 변수 생성).        */
 
 // 페이지가 로드될 때까지 기다렸다가 실행
 document.addEventListener("DOMContentLoaded", function () {
@@ -102,7 +100,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // 학생이 "다음"을 클릭했을 때 호출
-  async function nextQuestion() {
+  function nextQuestion() {
     currentIndex++;
     if (currentIndex < questions.length) {
       // 다음 문제 표시
@@ -116,23 +114,35 @@ document.addEventListener("DOMContentLoaded", function () {
       sessionStorage.setItem("sq-topics", JSON.stringify(wrongTopics));
       sessionStorage.setItem("sq-subject", data.subject || "");
 
-      // 로그인된 경우, 퀴즈 결과를 Supabase에 저장하고 XP 추가
-      var { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData.session) {
-        // quiz_results 테이블에 행 삽입
-        await supabase.from("quiz_results").insert({
-          subject: data.subject || "",
-          score: score,
-          total: questions.length,
-          xp_earned: xp,
-        });
+      // 로그인된 경우, 퀴즈 결과를 Supabase에 저장하고 XP를 추가한 후
+      // 어느 쪽이든 결과 페이지로 이동
+      sq.auth.getSession().then(function (result) {
+        var session = result.data && result.data.session;
+        if (session) {
+          // quiz_results 테이블에 행 삽입
+          sq.from("quiz_results")
+            .insert({
+              subject: data.subject || "",
+              score: score,
+              total: questions.length,
+              xp_earned: xp,
+            })
+            .then(function (insRes) {
+              if (insRes.error) console.log("결과 저장 오류:", insRes.error);
 
-        // 이 사용자의 profiles 총 XP에 획득한 XP 추가
-        await supabase.rpc("add_xp", { xp_to_add: xp }).catch(function () {});
-      }
-
-      // 결과 페이지로 이동
-      window.location.href = resultsUrl;
+              // 이 사용자의 profiles 총 XP에 획득한 XP 추가
+              return sq.rpc("add_xp", { xp_to_add: xp });
+            })
+            .then(function (rpcRes) {
+              if (rpcRes && rpcRes.error) console.log("XP 추가 오류:", rpcRes.error);
+              // 결과 페이지로 이동
+              window.location.href = resultsUrl;
+            });
+        } else {
+          // 로그인하지 않은 경우 — 그냥 결과 페이지로 이동
+          window.location.href = resultsUrl;
+        }
+      });
     }
   }
 
